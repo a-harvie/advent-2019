@@ -43,7 +43,7 @@ fn main() {
 }
 
 fn get_input() -> Vec<i32> {
-    let f = File::open("input.txt").unwrap();
+    let f = File::open("input/input.txt").unwrap();
     let reader = BufReader::new(f);
     let mut values = Vec::new();
     
