@@ -14,32 +14,44 @@ type point struct {
 	y int
 }
 
+type pathStep struct {
+	pos   point
+	delay int
+}
+
 func main() {
 	tests := []([]([]string)){
 		{
 			[]string{"R8", "U5", "L5", "D3"},
 			[]string{"U7", "R6", "D4", "L4"},
 			[]string{"6"},
+			[]string{"30"},
 		},
 		{
 			[]string{"R75", "D30", "R83", "U83", "L12", "D49", "R71", "U7", "L72"},
 			[]string{"U62", "R66", "U55", "R34", "D71", "R55", "D58", "R83"},
 			[]string{"159"},
+			[]string{"610"},
 		},
 		{
 			[]string{"R98", "U47", "R26", "D63", "R33", "U87", "L62", "D20", "R33", "U53", "R51"},
 			[]string{"U98", "R91", "D20", "R16", "D67", "R40", "U7", "R15", "U6", "R7"},
 			[]string{"135"},
+			[]string{"410"},
 		},
 	}
 
 	for _, test := range tests {
-		fmt.Printf("Test: \n%v\n %v\nExpects: \n%v\nActual: \n%v\n", test[0], test[1], test[2], closestIntersection(test[0], test[1]))
+		closest, leastDelay := closestIntersection(test[0], test[1])
+		fmt.Printf("Test: \n%v\n %v\nExpects: \n%v\nActual: \n%v\n", test[0], test[1], test[2], closest)
+		fmt.Printf("Pt 2 expects: \n%v\nActual: \n%v\n", test[3], leastDelay)
 	}
 
 	input, _ := getInput()
 	// fmt.Printf("input: %v\n%v", len(input), input)
-	fmt.Printf("Final answer, part 1: %v\n", closestIntersection(input[0], input[1]))
+	closest, leastDelay := closestIntersection(input[0], input[1])
+	fmt.Printf("Final answer, part 1: %v\n", closest)
+	fmt.Printf("Final asnwer, part 2: %v\n", leastDelay)
 
 }
 
@@ -69,18 +81,19 @@ func getInput() ([]([]string), error) {
 	return lines, nil
 }
 
-func closestIntersection(wire1 []string, wire2 []string) int {
+func closestIntersection(wire1 []string, wire2 []string) (int, int) {
 	path1 := calculatePath(wire1)
 	path2 := calculatePath(wire2)
 	intersections := getIntersections(path1, path2)
-	return getMinDistance(intersections)
+	return getMinDistance(intersections), getMinDelay(intersections)
 }
 
-func calculatePath(wire []string) []point {
-	path := make([]point, 0)
+func calculatePath(wire []string) []pathStep {
+	path := make([]pathStep, 0)
 	x := 0
 	y := 0
-	path = append(path, point{0, 0})
+	delay := 0
+	path = append(path, pathStep{point{x, y}, delay})
 
 	for _, step := range wire {
 		direction := step[0]
@@ -89,23 +102,39 @@ func calculatePath(wire []string) []point {
 		switch direction {
 		case 'U':
 			limit := y + distance
-			for y = y + 1; y < limit; y++ {
-				path = append(path, point{x, y})
+			for yy := y + 1; yy <= limit; yy++ {
+				y = yy
+				pos := point{x, y}
+				// delay = getDelay(delay, path, pos)
+				delay++
+				path = append(path, pathStep{pos, delay})
 			}
 		case 'D':
 			limit := y - distance
-			for y = y - 1; y > limit; y-- {
-				path = append(path, point{x, y})
+			for yy := y - 1; yy >= limit; yy-- {
+				y = yy
+				pos := point{x, y}
+				// delay = getDelay(delay, path, pos)
+				delay++
+				path = append(path, pathStep{pos, delay})
 			}
 		case 'L':
 			limit := x - distance
-			for x = x - 1; x > limit; x-- {
-				path = append(path, point{x, y})
+			for xx := x - 1; xx >= limit; xx-- {
+				x = xx
+				pos := point{x, y}
+				// delay = getDelay(delay, path, pos)
+				delay++
+				path = append(path, pathStep{pos, delay})
 			}
 		case 'R':
 			limit := x + distance
-			for x = x + 1; x < limit; x++ {
-				path = append(path, point{x, y})
+			for xx := x + 1; xx <= limit; xx++ {
+				x = xx
+				pos := point{x, y}
+				// delay = getDelay(delay, path, pos)
+				delay++
+				path = append(path, pathStep{pos, delay})
 			}
 		}
 
@@ -114,18 +143,28 @@ func calculatePath(wire []string) []point {
 	return path
 }
 
-func getIntersections(path1 []point, path2 []point) []point {
-	intersections := make([]point, 0)
-	for _, p := range path1 {
-		if p.x == 0 && p.y == 0 {
+// func getDelay(delay int, path []pathStep, newPos point) int {
+// 	for _, s := range path {
+// 		if s.pos.x == newPos.x && s.pos.y == newPos.y {
+// 			return s.delay
+// 		}
+// 	}
+
+// 	return delay + 1
+// }
+
+func getIntersections(path1 []pathStep, path2 []pathStep) []pathStep {
+	intersections := make([]pathStep, 0)
+	for _, s := range path1 {
+		if s.pos.x == 0 && s.pos.y == 0 {
 			continue
 		}
-		for _, p2 := range path2 {
-			if p.x == 0 && p.y == 0 {
+		for _, s2 := range path2 {
+			if s.pos.x == 0 && s.pos.y == 0 {
 				continue
 			}
-			if p.x == p2.x && p.y == p2.y {
-				intersections = append(intersections, point{p.x, p.y})
+			if s.pos.x == s2.pos.x && s.pos.y == s2.pos.y {
+				intersections = append(intersections, pathStep{point{s.pos.x, s.pos.y}, s.delay + s2.delay})
 			}
 		}
 	}
@@ -133,10 +172,10 @@ func getIntersections(path1 []point, path2 []point) []point {
 	return intersections
 }
 
-func getMinDistance(path []point) int {
+func getMinDistance(path []pathStep) int {
 	min := math.MaxInt64
-	for _, p := range path {
-		d := manhattanDistance(p, point{0, 0})
+	for _, s := range path {
+		d := manhattanDistance(s.pos, point{0, 0})
 		if d < min {
 			min = d
 		}
@@ -153,4 +192,15 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+func getMinDelay(path []pathStep) int {
+	min := math.MaxInt64
+	for _, s := range path {
+		if s.delay < min {
+			min = s.delay
+		}
+	}
+
+	return min
 }
