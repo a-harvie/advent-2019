@@ -7,10 +7,11 @@ import (
 // ChannelCompute takes an input program as a slice of integers, and an integer input channel,
 // and computes to the provided integer output channel.
 func ChannelCompute(start []int, input chan int, output chan int, errors chan error) {
-	program := make([]int, len(start))
+	program := make([]int, len(start)*memoryMultiplier)
 	_ = copy(program, start)
 
 	i := 0
+	r := 0 // relative base
 
 	for {
 		cmd, paramModes := parseCmd(program[i])
@@ -22,7 +23,7 @@ func ChannelCompute(start []int, input chan int, output chan int, errors chan er
 			break
 		}
 
-		params := parseParams(&program, i, cmd, paramModes)
+		params := parseParams(&program, i, r, cmd, paramModes)
 
 		// fmt.Printf(" parsed params: %v\n", params)
 
@@ -38,7 +39,7 @@ func ChannelCompute(start []int, input chan int, output chan int, errors chan er
 			opInput(&program, append(params, inputParam))
 			i += 2
 		case 4:
-			output <- opOutput(&program, params)
+			output <- params[0]
 			i += 2
 		case 5:
 			i = opJumpTrue(&program, i, params)
@@ -50,6 +51,9 @@ func ChannelCompute(start []int, input chan int, output chan int, errors chan er
 		case 8:
 			opEquals(&program, params)
 			i += 4
+		case 9:
+			r += opAdjustBase(&program, params)
+			i += 2
 		default:
 			errors <- fmt.Errorf("oh noes, can't do %v", cmd)
 			// todo: keep going?
