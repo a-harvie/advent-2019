@@ -70,3 +70,27 @@ func StringOfInts(filePath string) ([]([]int), error) {
 
 	return input, nil
 }
+
+// StringOfStrings takes a path to a file with lines of non-separated strings
+// and returns a slice of string slices, one per line in the input file
+func StringOfStrings(filePath string) ([]([]string), error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	input := make([]([]string), 0)
+	for {
+		fileLine, err := reader.ReadString('\n')
+
+		input = append(input, strings.Split(strings.TrimSpace(fileLine), ""))
+
+		if err != nil {
+			break
+		}
+	}
+
+	return input, nil
+}
