@@ -94,3 +94,34 @@ func StringOfStrings(filePath string) ([]([]string), error) {
 
 	return input, nil
 }
+
+// Vectors parses AoC vectors of the format <x=0, y=1, z=2>, one per line
+func Vectors(filePath string) ([]([]int), error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	input := make([]([]int), 0)
+	for {
+		fileLine, err := reader.ReadString('\n')
+		fileLine = strings.Trim(fileLine, "<>\n")
+		parts := strings.Split(fileLine, ", ")
+		inputLine := make([]int, 3)
+		for i, element := range parts {
+			splitElem := strings.Split(element, "=")
+			value, _ := strconv.Atoi(splitElem[1])
+			inputLine[i] = value
+		}
+
+		input = append(input, inputLine)
+
+		if err != nil {
+			break
+		}
+	}
+
+	return input, nil
+}
