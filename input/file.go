@@ -125,3 +125,39 @@ func Vectors(filePath string) ([]([]int), error) {
 
 	return input, nil
 }
+
+// StochiometricList parses a list of AoC stochiometry formulae: 1 A, 2 B, 3 C => 4 Z
+// Results in [][]string: [Z, 4, A, 1, B, 2, C, 3]
+func StochiometricList(filePath string) ([]([]string), error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	input := make([]([]string), 0)
+	for {
+		fileLine, err := reader.ReadString('\n')
+		fileLine = strings.Trim(fileLine, "\n")
+
+		inputLine := make([]string, 0)
+		parts := strings.Split(fileLine, " => ")
+		keyParts := strings.Split(parts[1], " ")
+		inputLine = append(inputLine, strings.TrimSpace(keyParts[1]), strings.TrimSpace(keyParts[0]))
+
+		for _, element := range strings.Split(parts[0], ", ") {
+			element = strings.TrimSpace(element)
+			elementParts := strings.Split(element, " ")
+			inputLine = append(inputLine, elementParts[1], elementParts[0])
+		}
+
+		input = append(input, inputLine)
+
+		if err != nil {
+			break
+		}
+	}
+
+	return input, nil
+}
